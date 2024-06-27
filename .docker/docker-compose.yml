@@ -1,0 +1,33 @@
+version: "3"
+
+services:
+  php:
+    build:
+      context: ../
+      dockerfile: .docker/php/Dockerfile
+    volumes:
+      - ../:/var/www/html
+    networks:
+      - symfony_app
+    command: sh -c "chmod +x /var/www/html/.docker/entrypoint.sh && /var/www/html/.docker/entrypoint.sh"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  nginx:
+    build:
+      context: ../
+      dockerfile: .docker/nginx/Dockerfile
+    volumes:
+      - ../:/var/www/html
+    ports:
+      - 9001:80
+    networks:
+      - symfony_app
+    depends_on:
+      - php
+
+volumes:
+  db_app:
+
+networks:
+  symfony_app:
