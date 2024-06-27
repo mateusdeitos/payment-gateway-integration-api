@@ -50,6 +50,7 @@ class ErrorEventSubscriber implements EventSubscriberInterface {
 			'message' => $message,
 		];
 
+		$event->allowCustomResponseCode();
 		$event->setResponse(new JsonResponse($error, $code));
 	}
 }
