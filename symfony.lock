@@ -1,17 +1,4 @@
 {
-    "doctrine/mongodb-odm-bundle": {
-        "version": "5.0",
-        "recipe": {
-            "repo": "github.com/symfony/recipes-contrib",
-            "branch": "main",
-            "version": "5.0",
-            "ref": "ed0a2da4b9351025c9e6e3837a0677d73f20e424"
-        },
-        "files": [
-            "config/packages/doctrine_mongodb.yaml",
-            "src/Document/.gitignore"
-        ]
-    },
     "phpunit/phpunit": {
         "version": "10.5",
         "recipe": {
@@ -80,6 +67,18 @@
         "files": [
             "config/packages/routing.yaml",
             "config/routes.yaml"
+        ]
+    },
+    "symfony/validator": {
+        "version": "7.0",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "7.0",
+            "ref": "8c1c4e28d26a124b0bb273f537ca8ce443472bfd"
+        },
+        "files": [
+            "config/packages/validator.yaml"
         ]
     }
 }

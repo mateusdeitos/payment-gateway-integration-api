@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     libonig-dev \
-	libmongoc-dev \
     acl \
     && echo 'alias sf="php bin/console"' >> ~/.bashrc
 
