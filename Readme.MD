@@ -26,8 +26,8 @@ A makefile was created to facilitate running the application.
  - Create a dev account and generate an api key
  > for a list of card numbers to use for testing purposes: https://dev.shift4.com/docs/testing
 
-request:
-´´´curl
+example request:
+´´´
 curl --request POST \
   --url http://localhost:9001/api/v1/shift4/payment \
   --header 'Content-Type: application/json' \
@@ -46,7 +46,9 @@ curl --request POST \
  - Documentation: https://docs.oppwa.com/integrations/server-to-server#syncPayment
 
 example request:
-´´´curl
+
+´´´
+
 curl --request POST \
   --url http://localhost:9001/api/v1/aci/payment \
   --header 'Content-Type: application/json' \
