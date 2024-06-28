@@ -5,6 +5,8 @@ namespace App\Connector\Payment\Shift4;
 use App\Connector\Payment\Shift4\Model\CreateCardResponseModel;
 use App\Connector\Payment\Shift4\Model\CreatePaymentModel;
 use App\Connector\Payment\Shift4\Model\CreatePaymentResponseModel;
+use App\Exception\ConnectorException;
+use Psr\Http\Message\RequestInterface;
 
 // TODO: retrieve envs using a service
 class PaymentApi {
@@ -14,8 +16,31 @@ class PaymentApi {
 	public function __construct() {
 		$stack = new \GuzzleHttp\HandlerStack();
 		$stack->setHandler(new \GuzzleHttp\Handler\CurlHandler());
+		$stack->push(\GuzzleHttp\Middleware::retry(
+			decider: function (int $retries, RequestInterface $request, ?\Psr\Http\Message\ResponseInterface $response, ?\Throwable $exception) {
+				if ($retries >= 5) {
+					throw new ConnectorException('Failed to connect to Shift4 api', code: 0, previous: $exception);
+				}
 
-		// TODO: Error handling and retrying handling
+				if ($exception instanceof \GuzzleHttp\Exception\ConnectException) {
+					return true;
+				}
+
+				if ($response?->getStatusCode() === 429) {
+					return true;
+				}
+
+				return false;
+			},
+			delay: function (int $retries, ?\Psr\Http\Message\ResponseInterface $response, RequestInterface $request) {
+				if ($response?->getHeaderLine('Retry-After')) {
+					return $response?->getHeaderLine('Retry-After') * 1000;
+				}
+
+				return $retries * 1000;
+			}),
+		);
+
 		$this->client = new \GuzzleHttp\Client([
 			'base_uri' => 'https://api.shift4.com',
 			'timeout' => 15,
@@ -29,9 +54,13 @@ class PaymentApi {
 	public function createPayment(CreatePaymentModel $createPaymentModel): CreatePaymentResponseModel {
 		$response = $this->client->post("/charges", ['form_params' => $createPaymentModel]);
 
+		if ($response->getStatusCode() !== 200) {
+			throw new ConnectorException('Invalid response from Shift4 api', originalMessage: $response->getBody()->getContents());
+		}
+
 		$body = json_decode($response->getBody()->getContents(), true);
 		if (!is_array($body)) {
-			throw new \Exception('Invalid response from Shift4');
+			throw new ConnectorException('Invalid response from Shift4');
 		}
 
 		$createPaymentResponseModel = new CreatePaymentResponseModel();

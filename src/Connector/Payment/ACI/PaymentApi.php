@@ -8,18 +8,43 @@ use App\Connector\Payment\ACI\Model\CreatePaymentResponseModel;
 use App\Connector\Payment\ACI\Model\ResultDetailsResponseModel;
 use App\Connector\Payment\ACI\Model\ResultResponseModel;
 use App\Connector\Payment\ACI\Model\RiskResponseModel;
+use App\Exception\ConnectorException;
+use Psr\Http\Message\RequestInterface;
 
 // TODO: retrieve envs using a service
 class PaymentApi
 {
     private \GuzzleHttp\Client $client;
 
-    public function __construct()
-    {
+    public function __construct() {
         $stack = new \GuzzleHttp\HandlerStack();
         $stack->setHandler(new \GuzzleHttp\Handler\CurlHandler());
 
-        // TODO: Error handling and retrying handling
+		$stack->push(\GuzzleHttp\Middleware::retry(
+			decider: function (int $retries, RequestInterface $request, ?\Psr\Http\Message\ResponseInterface $response, ?\Throwable $exception) {
+				if ($retries >= 5) {
+					throw new ConnectorException('Failed to connect to ACI', code: 0, previous: $exception);
+				}
+
+				if ($exception instanceof \GuzzleHttp\Exception\ConnectException) {
+					return true;
+				}
+
+				if ($response?->getStatusCode() === 429) {
+					return true;
+				}
+
+				return false;
+			},
+			delay: function (int $retries, ?\Psr\Http\Message\ResponseInterface $response, RequestInterface $request) {
+				if ($response?->getHeaderLine('Retry-After')) {
+					return $response?->getHeaderLine('Retry-After') * 1000;
+				}
+
+				return $retries * 1000;
+			}),
+		);
+
         $this->client = new \GuzzleHttp\Client([
             'base_uri' => 'https://eu-test.oppwa.com',
             'timeout' => 15,
@@ -39,7 +64,7 @@ class PaymentApi
             [
 				'form_params' => [
 					'entityId' => $createPaymentModel->entityId,
-					'amount' => $createPaymentModel->amount,
+					'amount' => round($createPaymentModel->amount / 100, 2),
 					'currency' => $createPaymentModel->currency,
 					'paymentBrand' => $createPaymentModel->paymentBrand,
 					'paymentType' => $createPaymentModel->paymentType,
@@ -51,9 +76,13 @@ class PaymentApi
             ]
         );
 
+		if ($response->getStatusCode() !== 200) {
+			throw new ConnectorException('Invalid response from ACI', originalMessage: $response->getBody()->getContents());
+		}
+
         $body = json_decode($response->getBody()->getContents(), true);
         if (!is_array($body)) {
-            throw new \Exception('Invalid response from ACI');
+            throw new ConnectorException('Invalid response from ACI');
         }
 
         $createPaymentResponseModel = new CreatePaymentResponseModel();

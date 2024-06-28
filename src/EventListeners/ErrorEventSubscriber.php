@@ -2,6 +2,7 @@
 
 namespace App\EventListeners;
 
+use App\Exception\ConnectorException;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -50,7 +51,23 @@ class ErrorEventSubscriber implements EventSubscriberInterface {
 			'message' => $message,
 		];
 
+		if ($exception instanceof ConnectorException) {
+			$error['code'] = $exception->getStatusCode();
+			$originalMessage = $exception->getOriginalMessage();
+			if (json_validate($originalMessage)) {
+				$originalMessage = json_decode($originalMessage, true);
+			}
+
+			$error['originalMessage'] = $originalMessage;
+		}
+
+		$response = new JsonResponse($error, $code);
+
+		$response->headers->add([
+			'X-Error-From-Connector' => $exception instanceof ConnectorException ? '1' : '0',
+		]);
+
 		$event->allowCustomResponseCode();
-		$event->setResponse(new JsonResponse($error, $code));
+		$event->setResponse($response);
 	}
 }
