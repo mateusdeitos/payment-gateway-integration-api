@@ -14,7 +14,7 @@ class CreatedPaymentResponseDTO {
 		public readonly ?\DateTime $createdAt,
 		
 		#[Assert\NotBlank()]
-		public readonly ?int $amount,
+		public readonly null|int|float $amount,
 		
 		#[Assert\NotBlank()]
 		public readonly ?string $currency,

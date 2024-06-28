@@ -9,6 +9,7 @@ use App\Connector\Payment\ACI\Model\ResultDetailsResponseModel;
 use App\Connector\Payment\ACI\Model\ResultResponseModel;
 use App\Connector\Payment\ACI\Model\RiskResponseModel;
 use App\Exception\ConnectorException;
+use App\Interface\EnvVariableResolverInterface;
 use Psr\Http\Message\RequestInterface;
 
 // TODO: retrieve envs using a service
@@ -16,13 +17,16 @@ class PaymentApi
 {
     private \GuzzleHttp\Client $client;
 
-    public function __construct() {
+    public function __construct(
+		private EnvVariableResolverInterface $envResolver,
+		?callable $handler = null,
+	) {
         $stack = new \GuzzleHttp\HandlerStack();
-        $stack->setHandler(new \GuzzleHttp\Handler\CurlHandler());
+        $stack->setHandler($handler ?? new \GuzzleHttp\Handler\CurlHandler());
 
 		$stack->push(\GuzzleHttp\Middleware::retry(
 			decider: function (int $retries, RequestInterface $request, ?\Psr\Http\Message\ResponseInterface $response, ?\Throwable $exception) {
-				if ($retries >= 5) {
+				if ($retries > 2) {
 					throw new ConnectorException('Failed to connect to ACI', code: 0, previous: $exception);
 				}
 
@@ -30,11 +34,14 @@ class PaymentApi
 					return true;
 				}
 
-				if ($response?->getStatusCode() === 429) {
-					return true;
-				}
-
-				return false;
+				return match ($response?->getStatusCode()) {
+					429 => true,
+					500 => true,
+					502 => true,
+					503 => true,
+					504 => true,
+					default => false
+				};
 			},
 			delay: function (int $retries, ?\Psr\Http\Message\ResponseInterface $response, RequestInterface $request) {
 				if ($response?->getHeaderLine('Retry-After')) {
@@ -51,9 +58,9 @@ class PaymentApi
             'http_errors' => false,
             'handler' => $stack,
             'headers' => [
-                'Authorization' => 'Bearer ' . $_ENV['ACI_API_KEY'],
+                'Authorization' => 'Bearer ' . $this->envResolver->getOrFail('ACI_API_KEY'),
             ],
-			'verify' => $_ENV['APP_ENV'] === 'prod',
+			'verify' => $this->envResolver->getOrFail('APP_ENV') === 'prod',
         ]);
 
     }

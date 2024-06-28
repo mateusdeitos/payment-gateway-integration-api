@@ -7,19 +7,21 @@ use App\Connector\Payment\ACI\Model\CreatePaymentModel;
 use App\DTO\CreatedPaymentResponseDTO;
 use App\DTO\CreatePaymentDTO;
 use App\Interface\CreatePaymentConnectorInterface;
+use App\Interface\EnvVariableResolverInterface;
 
 class ACIPaymentConnector implements CreatePaymentConnectorInterface {
 
 	public function __construct(
-		private PaymentApi $paymentApi
+		private PaymentApi $paymentApi,
+		private EnvVariableResolverInterface $envResolver
 	) {}
 
 	public function createPayment(CreatePaymentDTO $createPaymentDTO): CreatedPaymentResponseDTO {		
 		$createPaymentModel = new CreatePaymentModel(
-			entityId: $_ENV['ACI_ENTITY_ID'],
+			entityId: $this->envResolver->getOrFail('ACI_ENTITY_ID'),
 			amount: $createPaymentDTO->amount,
 			currency: $createPaymentDTO->currency,
-			paymentBrand: $_ENV['ACI_PAYMENT_BRAND'],
+			paymentBrand: $this->envResolver->getOrFail('ACI_PAYMENT_BRAND'),
 			paymentType: 'DB',
 			card: new CardDetailsModel(
 				number: $createPaymentDTO->cardNumber,

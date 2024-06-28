@@ -7,11 +7,13 @@ use App\Connector\Payment\Shift4\Model\CreatePaymentModel;
 use App\DTO\CreatedPaymentResponseDTO;
 use App\DTO\CreatePaymentDTO;
 use App\Interface\CreatePaymentConnectorInterface;
+use App\Interface\EnvVariableResolverInterface;
 
 class Shift4PaymentConnector implements CreatePaymentConnectorInterface {
 
 	public function __construct(
-		private PaymentApi $paymentApi
+		private PaymentApi $paymentApi,
+		private EnvVariableResolverInterface $envResolver
 	) {}
 
 	public function createPayment(CreatePaymentDTO $createPaymentDTO): CreatedPaymentResponseDTO {
@@ -19,7 +21,7 @@ class Shift4PaymentConnector implements CreatePaymentConnectorInterface {
 		$createPaymentModel = new CreatePaymentModel(
 			amount: $createPaymentDTO->amount,
 			currency: $createPaymentDTO->currency,
-			customerId: $_ENV['SHIFT_4_CUSTOMER_ID'] ?? "",
+			customerId: $this->envResolver->getOrFail('SHIFT_4_CUSTOMER_ID') ?? "",
 			card: new CardDetailsModel(
 				number: $createPaymentDTO->cardNumber,
 				expMonth: $createPaymentDTO->cardExpMonth,

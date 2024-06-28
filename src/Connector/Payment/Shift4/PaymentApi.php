@@ -6,6 +6,7 @@ use App\Connector\Payment\Shift4\Model\CreateCardResponseModel;
 use App\Connector\Payment\Shift4\Model\CreatePaymentModel;
 use App\Connector\Payment\Shift4\Model\CreatePaymentResponseModel;
 use App\Exception\ConnectorException;
+use App\Interface\EnvVariableResolverInterface;
 use Psr\Http\Message\RequestInterface;
 
 // TODO: retrieve envs using a service
@@ -13,12 +14,15 @@ class PaymentApi {
 
 	private \GuzzleHttp\Client $client;
 
-	public function __construct() {
+	public function __construct(
+		private EnvVariableResolverInterface $envResolver,
+		?callable $handler = null,
+	) {
 		$stack = new \GuzzleHttp\HandlerStack();
-		$stack->setHandler(new \GuzzleHttp\Handler\CurlHandler());
+		$stack->setHandler($handler ?? new \GuzzleHttp\Handler\CurlHandler());
 		$stack->push(\GuzzleHttp\Middleware::retry(
 			decider: function (int $retries, RequestInterface $request, ?\Psr\Http\Message\ResponseInterface $response, ?\Throwable $exception) {
-				if ($retries >= 5) {
+				if ($retries > 2) {
 					throw new ConnectorException('Failed to connect to Shift4 api', code: 0, previous: $exception);
 				}
 
@@ -26,11 +30,14 @@ class PaymentApi {
 					return true;
 				}
 
-				if ($response?->getStatusCode() === 429) {
-					return true;
-				}
-
-				return false;
+				return match ($response?->getStatusCode()) {
+					429 => true,
+					500 => true,
+					502 => true,
+					503 => true,
+					504 => true,
+					default => false
+				};
 			},
 			delay: function (int $retries, ?\Psr\Http\Message\ResponseInterface $response, RequestInterface $request) {
 				if ($response?->getHeaderLine('Retry-After')) {
@@ -46,7 +53,7 @@ class PaymentApi {
 			'timeout' => 15,
 			'http_errors' => false,
 			'handler' => $stack,
-			'auth' => [$_ENV['SHIFT_4_API_KEY'] ?? "", ""],
+			'auth' => [$this->envResolver->getOrFail('SHIFT_4_API_KEY') ?? "", ""],
 		]);
 
 	}
