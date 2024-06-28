@@ -4,7 +4,7 @@ use App\Connector\Payment\ACI\PaymentApi;
 use App\Connector\Payment\ACI\ACIPaymentConnector;
 use App\DTO\CreatePaymentDTO;
 use App\Exception\ConnectorException;
-use App\Services\EnvVariableResolverService;
+use App\Service\EnvVariableResolverService;
 use GuzzleHttp\Handler\MockHandler;
 
 describe('ACIConnectorTest', function () {

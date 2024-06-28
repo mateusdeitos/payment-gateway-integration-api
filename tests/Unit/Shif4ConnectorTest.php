@@ -4,7 +4,7 @@ use App\Connector\Payment\Shift4\PaymentApi;
 use App\Connector\Payment\Shift4\Shift4PaymentConnector;
 use App\DTO\CreatePaymentDTO;
 use App\Exception\ConnectorException;
-use App\Services\EnvVariableResolverService;
+use App\Service\EnvVariableResolverService;
 use GuzzleHttp\Handler\MockHandler;
 
 describe('Shif4ConnectorTest', function () {
