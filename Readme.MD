@@ -27,7 +27,7 @@ A makefile was created to facilitate running the application.
  > for a list of card numbers to use for testing purposes: https://dev.shift4.com/docs/testing
 
 example request:
-´´´
+```curl
 curl --request POST \
   --url http://localhost:9001/api/v1/shift4/payment \
   --header 'Content-Type: application/json' \
@@ -39,7 +39,7 @@ curl --request POST \
   "cardExpYear": 2032,
   "cardCvv": 123
 }'
-´´´
+```
 
 ### ACI
 
@@ -47,7 +47,7 @@ curl --request POST \
 
 example request:
 
-´´´
+```curl
 
 curl --request POST \
   --url http://localhost:9001/api/v1/aci/payment \
@@ -60,4 +60,4 @@ curl --request POST \
   "cardExpYear": 2032,
   "cardCvv": 123
 }'
-´´´
+```
