@@ -4,8 +4,8 @@ namespace App\Command;
 
 use App\DTO\CreatePaymentDTO;
 use App\Enum\ConnectorIntegrationEnum;
-use App\Services\ConstraintViolationParserService;
-use App\Services\Payment\CreatePaymentService;
+use App\Service\ConstraintViolationParserService;
+use App\Service\Payment\CreatePaymentService;
 use ReflectionProperty;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;

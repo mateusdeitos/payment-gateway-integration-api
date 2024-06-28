@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Service;
 
 use App\Exception\EnvVariableNotDefinedException;
 use App\Interface\EnvVariableResolverInterface;

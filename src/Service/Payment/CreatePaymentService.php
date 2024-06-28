@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Services\Payment;
+namespace App\Service\Payment;
 
 use App\DTO\CreatedPaymentResponseDTO;
 use App\DTO\CreatePaymentDTO;
 use App\Enum\ConnectorIntegrationEnum;
 use App\Interface\PaymentConnectorFactoryInterface;
-use App\Services\ConstraintViolationParserService;
+use App\Service\ConstraintViolationParserService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 

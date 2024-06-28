@@ -1,9 +1,9 @@
 <?php
 
-namespace App\EventListeners;
+namespace App\EventSubscriber;
 
 use App\Exception\ConnectorException;
-use App\Services\ConstraintViolationParserService;
+use App\Service\ConstraintViolationParserService;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;

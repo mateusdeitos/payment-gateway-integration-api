@@ -4,7 +4,7 @@ namespace App\Controller\Payment;
 
 use App\DTO\CreatePaymentDTO;
 use App\Enum\ConnectorIntegrationEnum;
-use App\Services\Payment\CreatePaymentService;
+use App\Service\Payment\CreatePaymentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Attribute\Route;
