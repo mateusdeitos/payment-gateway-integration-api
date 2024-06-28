@@ -30,15 +30,15 @@ class Shift4PaymentConnector implements CreatePaymentConnectorInterface {
 
 		$res = $this->paymentApi->createPayment($createPaymentModel);
 
-		$fnConvertTimestampToDatetime = function (?int $timestamp): \DateTime {
+		$fnConvertTimestampToDatetime = function (?int $timestamp): ?\DateTime {
 			if ($timestamp === null) {
-				return new \DateTime();
+				return null;
 			}
 
 			$date = date('Y-m-d H:i:s', $timestamp);
 			$dateTime = \DateTime::createFromFormat('Y-m-d H:i:s', $date);
 			if ($dateTime === false) {
-				return new \DateTime();
+				return null;
 			}
 
 			return $dateTime;

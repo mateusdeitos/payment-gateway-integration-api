@@ -12,7 +12,8 @@ class CreatePaymentConnectorFactory implements PaymentConnectorFactoryInterface 
 
 	public function __construct(
 		#[AutowireLocator([
-			ConnectorIntegrationEnum::SHIFT_4->value => \App\Connector\Payment\Shift4\Shift4PaymentConnector::class
+			ConnectorIntegrationEnum::SHIFT_4->value => \App\Connector\Payment\Shift4\Shift4PaymentConnector::class,
+			ConnectorIntegrationEnum::ACI->value => \App\Connector\Payment\ACI\ACIPaymentConnector::class,
 		])]
 		private ServiceLocator $paymentConnectors
 	)
