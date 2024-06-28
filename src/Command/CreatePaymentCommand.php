@@ -4,6 +4,7 @@ namespace App\Command;
 
 use App\DTO\CreatePaymentDTO;
 use App\Enum\ConnectorIntegrationEnum;
+use App\Services\ConstraintViolationParserService;
 use App\Services\Payment\CreatePaymentService;
 use ReflectionProperty;
 use Symfony\Component\Console\Attribute\AsCommand;
@@ -62,7 +63,7 @@ class CreatePaymentCommand extends Command {
 		$createPaymentDTO->cardExpMonth = intval($input->getOption('cardExpMonth'));
 		$createPaymentDTO->cardCvv = intval($input->getOption('cardCvv'));
 
-		$errors = $this->validator->validate($createPaymentDTO);
+		$errors = ConstraintViolationParserService::parse($this->validator->validate($createPaymentDTO));
 		if (count($errors) > 0) {
 			$output->writeln("<bg=red>Validation Errors:</>");
 			$output->writeln((string) $errors);
