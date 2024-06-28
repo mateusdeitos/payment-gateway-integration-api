@@ -3,6 +3,7 @@
 namespace App\EventListeners;
 
 use App\Exception\ConnectorException;
+use App\Services\ConstraintViolationParserService;
 use InvalidArgumentException;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -10,6 +11,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpKernel\Event\ExceptionEvent;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\Validator\Exception\ValidationFailedException;
 
 class ErrorEventSubscriber implements EventSubscriberInterface {
 
@@ -50,6 +52,18 @@ class ErrorEventSubscriber implements EventSubscriberInterface {
 		$error = [
 			'message' => $message,
 		];
+
+		$previous = $exception->getPrevious();
+		$violations = $exception instanceof ValidationFailedException ? $exception->getViolations() : null;
+		if ($violations === null && $previous instanceof ValidationFailedException) {
+			$violations = $previous->getViolations();
+		}
+
+		if ($violations !== null) {
+			$details = ConstraintViolationParserService::parse($violations);
+			$error['message'] = "validation error";
+			$error['details'] = $details;
+		}
 
 		if ($exception instanceof ConnectorException) {
 			$error['code'] = $exception->getStatusCode();

@@ -6,8 +6,8 @@ use App\DTO\CreatedPaymentResponseDTO;
 use App\DTO\CreatePaymentDTO;
 use App\Enum\ConnectorIntegrationEnum;
 use App\Interface\PaymentConnectorFactoryInterface;
+use App\Services\ConstraintViolationParserService;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Validator\ConstraintViolationInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class CreatePaymentService {
@@ -26,12 +26,14 @@ class CreatePaymentService {
 		$response = $paymentConnector->createPayment($createPaymentDTO);
 
 		// TODO: encapsulate this in a service
-		$errors = $this->validator->validate($response);
-		if (count($errors) > 0) {
-			$message = join(', ', array_map(
-				fn(ConstraintViolationInterface $error) => $error->getPropertyPath() . ': ' . $error->getMessage(),
-				(array) $errors
-			));
+		$violations = ConstraintViolationParserService::parse($this->validator->validate($response));
+		if (count($violations) > 0) {
+			$message = [];
+			foreach ($violations as $key => $value) {
+				$message[] = $key . ': ' . $value;
+			}
+
+			$message = implode(', ', $message);
 
 			$this->logger->alert(
 				'Invalid response from payment connector, violations: ' . $message,

@@ -6,9 +6,11 @@ use Symfony\Component\Validator\Constraints as Assert;
 class CreatePaymentDTO {
 
 	#[Assert\NotBlank()]
+	#[Assert\Positive()]
 	public int $amount = 0;
 
 	#[Assert\NotBlank()]
+	#[Assert\Length(exactly: 3)]
 	public string $currency = "";
 
 	#[Assert\NotBlank()]

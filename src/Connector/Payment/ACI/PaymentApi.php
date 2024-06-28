@@ -12,7 +12,6 @@ use App\Exception\ConnectorException;
 use App\Interface\EnvVariableResolverInterface;
 use Psr\Http\Message\RequestInterface;
 
-// TODO: retrieve envs using a service
 class PaymentApi
 {
     private \GuzzleHttp\Client $client;
