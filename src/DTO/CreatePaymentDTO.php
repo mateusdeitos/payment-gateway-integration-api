@@ -3,6 +3,9 @@
 namespace App\DTO;
 
 use Symfony\Component\Validator\Constraints as Assert;
+/**
+ * Payload for POST /api/v1/{connectorSlug}/payment
+ */
 class CreatePaymentDTO {
 
 	#[Assert\NotBlank()]

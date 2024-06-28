@@ -17,74 +17,78 @@ class PaymentApi
     private \GuzzleHttp\Client $client;
 
     public function __construct(
-		private EnvVariableResolverInterface $envResolver,
-		?callable $handler = null,
-	) {
+        private EnvVariableResolverInterface $envResolver,
+        ?callable $handler = null,
+    ) {
         $stack = new \GuzzleHttp\HandlerStack();
         $stack->setHandler($handler ?? new \GuzzleHttp\Handler\CurlHandler());
 
-		$stack->push(\GuzzleHttp\Middleware::retry(
-			decider: function (int $retries, RequestInterface $request, ?\Psr\Http\Message\ResponseInterface $response, ?\Throwable $exception) {
-				if ($retries > 2) {
-					throw new ConnectorException('Failed to connect to ACI', code: 0, previous: $exception);
-				}
+        $stack->push(
+            \GuzzleHttp\Middleware::retry(
+                decider: function (int $retries, RequestInterface $request, ?\Psr\Http\Message\ResponseInterface $response, ?\Throwable $exception) {
+                    if ($retries > 2) {
+                        throw new ConnectorException('Failed to connect to ACI', code: 0, previous: $exception);
+                    }
 
-				if ($exception instanceof \GuzzleHttp\Exception\ConnectException) {
-					return true;
-				}
+					// when a timeout occurs, the response is null and the exception is a ConnectException
+                    if ($exception instanceof \GuzzleHttp\Exception\ConnectException) {
+                        return true;
+                    }
 
-				return match ($response?->getStatusCode()) {
-					429 => true,
-					500 => true,
-					502 => true,
-					503 => true,
-					504 => true,
-					default => false
-				};
-			},
-			delay: function (int $retries, ?\Psr\Http\Message\ResponseInterface $response, RequestInterface $request) {
-				if ($response?->getHeaderLine('Retry-After')) {
-					return $response?->getHeaderLine('Retry-After') * 1000;
-				}
+                    return match ($response?->getStatusCode()) {
+                        429 => true,
+                        500 => true,
+                        502 => true,
+                        503 => true,
+                        504 => true,
+                        default => false
+                    };
+                },
+                delay: function (int $retries, ?\Psr\Http\Message\ResponseInterface $response, RequestInterface $request) {
+                    if ($response?->getHeaderLine('Retry-After')) {
+                        return $response?->getHeaderLine('Retry-After') * 1000;
+                    }
 
-				return $retries * 1000;
-			}),
-		);
+                    return $retries * 1000;
+                }
+            ),
+        );
 
         $this->client = new \GuzzleHttp\Client([
             'base_uri' => 'https://eu-test.oppwa.com',
-            'timeout' => 15,
+            'timeout' => 30,
             'http_errors' => false,
             'handler' => $stack,
             'headers' => [
                 'Authorization' => 'Bearer ' . $this->envResolver->getOrFail('ACI_API_KEY'),
             ],
-			'verify' => $this->envResolver->getOrFail('APP_ENV') === 'prod',
+            'verify' => $this->envResolver->getOrFail('APP_ENV') === 'prod',
         ]);
 
     }
 
-    public function createPayment(CreatePaymentModel $createPaymentModel): CreatePaymentResponseModel {
+    public function createPayment(CreatePaymentModel $createPaymentModel): CreatePaymentResponseModel
+    {
         $response = $this->client->post(
             "/v1/payments",
             [
-				'form_params' => [
-					'entityId' => $createPaymentModel->entityId,
-					'amount' => round($createPaymentModel->amount / 100, 2),
-					'currency' => $createPaymentModel->currency,
-					'paymentBrand' => $createPaymentModel->paymentBrand,
-					'paymentType' => $createPaymentModel->paymentType,
-					'card.number' => $createPaymentModel->card->number,
-					'card.expiryMonth' => $createPaymentModel->card->expiryMonth,
-					'card.expiryYear' => $createPaymentModel->card->expiryYear,
-					'card.cvv' => $createPaymentModel->card->cvc
-				],
+                'form_params' => [
+                    'entityId' => $createPaymentModel->entityId,
+                    'amount' => round($createPaymentModel->amount / 100, 2),
+                    'currency' => $createPaymentModel->currency,
+                    'paymentBrand' => $createPaymentModel->paymentBrand,
+                    'paymentType' => $createPaymentModel->paymentType,
+                    'card.number' => $createPaymentModel->card->number,
+                    'card.expiryMonth' => $createPaymentModel->card->expiryMonth,
+                    'card.expiryYear' => $createPaymentModel->card->expiryYear,
+                    'card.cvv' => $createPaymentModel->card->cvc
+                ],
             ]
         );
 
-		if ($response->getStatusCode() !== 200) {
-			throw new ConnectorException('Invalid response from ACI', originalMessage: $response->getBody()->getContents());
-		}
+        if ($response->getStatusCode() !== 200) {
+            throw new ConnectorException('Invalid response from ACI', originalMessage: $response->getBody()->getContents());
+        }
 
         $body = json_decode($response->getBody()->getContents(), true);
         if (!is_array($body)) {

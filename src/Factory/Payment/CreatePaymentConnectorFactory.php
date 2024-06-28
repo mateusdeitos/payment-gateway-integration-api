@@ -11,6 +11,9 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
 class CreatePaymentConnectorFactory implements PaymentConnectorFactoryInterface {
 
 	public function __construct(
+		/**
+		 * When creating a new connector, make sure to add it here, so it can be autowired
+		 */
 		#[AutowireLocator([
 			ConnectorIntegrationEnum::SHIFT_4->value => \App\Connector\Payment\Shift4\Shift4PaymentConnector::class,
 			ConnectorIntegrationEnum::ACI->value => \App\Connector\Payment\ACI\ACIPaymentConnector::class,

@@ -10,6 +10,9 @@ use App\Services\ConstraintViolationParserService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 
+/**
+ * Service responsible for creating a payment in the payment connector identified by the connectorSlug parameter
+ */
 class CreatePaymentService {
 
 	public function __construct(
@@ -25,7 +28,15 @@ class CreatePaymentService {
 		$paymentConnector = $this->paymentConnectorFactory->getInstanceForCreatePayment($connectorSlug);
 		$response = $paymentConnector->createPayment($createPaymentDTO);
 
-		// TODO: encapsulate this in a service
+		$this->logResponseViolations($response);
+
+		return $response;
+	}
+
+	/**
+	 * This method logs any unexpected constraint violations from the connector's response in order to monitor potential errors
+	 */
+	private function logResponseViolations(CreatedPaymentResponseDTO $response): void {
 		$violations = ConstraintViolationParserService::parse($this->validator->validate($response));
 		if (count($violations) > 0) {
 			$message = [];
@@ -39,7 +50,5 @@ class CreatePaymentService {
 				'Invalid response from payment connector, violations: ' . $message,
 			);
 		}
-
-		return $response;
 	}
 }
